@@ -233,7 +233,8 @@ async def play_music(ctx, url):
 		e = await awaitable_voice_client_play(ctx.guild.voice_client.play, player, client.loop)
 		if t:
 			t.cancel()
-	except:
+	except Exception as e:
+		print(e)
 		await ctx.channel.send("再生に失敗しました")
 
 async def play_queue(ctx, movie_infos):
