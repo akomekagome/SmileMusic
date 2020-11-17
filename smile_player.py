@@ -230,11 +230,11 @@ async def play_music(ctx, url):
 		volume = get_volume_sql(str(ctx.guild.id))
 		player, t = await YTDLSource.from_url(url, loop=client.loop, stream=True, volume=volume)
 		guild_table[ctx.guild.id]["player"] = player
-		e = await awaitable_voice_client_play(ctx.guild.voice_client.play, player, client.loop)
+		await awaitable_voice_client_play(ctx.guild.voice_client.play, player, client.loop)
 		if t:
 			t.cancel()
-	except Exception as e:
-		print(e)
+	except Exception as error:
+		print(error)
 		await ctx.channel.send("再生に失敗しました")
 
 async def play_queue(ctx, movie_infos):
