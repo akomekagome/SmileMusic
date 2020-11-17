@@ -233,7 +233,7 @@ async def play_music(ctx, url):
 		await awaitable_voice_client_play(ctx.guild.voice_client.play, player, client.loop)
 		if t:
 			t.cancel()
-	except Exception as error:
+	except BaseException as error:
 		print(error)
 		await ctx.channel.send("再生に失敗しました")
 
@@ -607,7 +607,7 @@ async def on_message(ctx):
 			for info in movie_infos:
 				info["author"] = ctx.author
 			await play_queue(ctx, movie_infos)
-		except Exception as e:
+		except BaseException as e:
 			print(e)
 			await ctx.channel.send("検索に失敗しました。")
 	elif args[0] == "py" and len(args) >= 2:
@@ -617,7 +617,7 @@ async def on_message(ctx):
 			for info in infos:
 				info["author"] = ctx.author
 			await play_queue(ctx, infos)
-		except Exception as e:
+		except BaseException as e:
 			print(e)
 			await ctx.channel.send("検索に失敗しました。")
 	elif args[0] == "q":
