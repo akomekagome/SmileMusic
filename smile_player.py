@@ -226,16 +226,12 @@ def awaitable_voice_client_play(func, player, loop):
 	return f
 
 async def play_music(ctx, url):
-	try:
-		volume = get_volume_sql(str(ctx.guild.id))
-		player, t = await YTDLSource.from_url(url, loop=client.loop, stream=True, volume=volume)
-		guild_table[ctx.guild.id]["player"] = player
-		await awaitable_voice_client_play(ctx.guild.voice_client.play, player, client.loop)
-		if t:
-			t.cancel()
-	except BaseException as error:
-		print(error)
-		await ctx.channel.send("再生に失敗しました")
+	volume = get_volume_sql(str(ctx.guild.id))
+	player, t = await YTDLSource.from_url(url, loop=client.loop, stream=True, volume=volume)
+	guild_table[ctx.guild.id]["player"] = player
+	await awaitable_voice_client_play(ctx.guild.voice_client.play, player, client.loop)
+	if t:
+		t.cancel()
 
 async def play_queue(ctx, movie_infos):
 	if(not movie_infos):
@@ -591,25 +587,21 @@ async def on_message(ctx):
 
 		keyword = ' '.join(args[1:])
 		sort = next((x for x in ['h', 'f', 'm', 'n'] if x in options), 'v')
-		try:
-			if args[1].startswith("https://www.nicovideo.jp/search"):
-				movie_infos = infos_from_html(args[1], **slice_dict)
-			elif args[1].startswith("https://www.nicovideo.jp/tag"):
-				movie_infos = infos_from_json(args[1], **slice_dict)
-			elif re.match("https://www.nicovideo.jp/(.*)/mylist", args[1]):
-				movie_infos = infos_from_json(args[1], **slice_dict if slice_dict else {"start": 0, "stop": 100})
-			elif re.match("https?://", args[1]):
-				movie_infos = await infos_from_ytdl(args[1], client.loop)
-			elif "t" in options:
-				movie_infos = infos_from_json(search_tag_url(keyword, sort), **slice_dict)
-			else:
-				movie_infos = infos_from_html(search_keyword_url(keyword, sort), **slice_dict)
-			for info in movie_infos:
-				info["author"] = ctx.author
-			await play_queue(ctx, movie_infos)
-		except BaseException as e:
-			print(e)
-			await ctx.channel.send("検索に失敗しました。")
+		if args[1].startswith("https://www.nicovideo.jp/search"):
+			movie_infos = infos_from_html(args[1], **slice_dict)
+		elif args[1].startswith("https://www.nicovideo.jp/tag"):
+			movie_infos = infos_from_json(args[1], **slice_dict)
+		elif re.match("https://www.nicovideo.jp/(.*)/mylist", args[1]):
+			movie_infos = infos_from_json(args[1], **slice_dict if slice_dict else {"start": 0, "stop": 100})
+		elif re.match("https?://", args[1]):
+			movie_infos = await infos_from_ytdl(args[1], client.loop)
+		elif "t" in options:
+			movie_infos = infos_from_json(search_tag_url(keyword, sort), **slice_dict)
+		else:
+			movie_infos = infos_from_html(search_keyword_url(keyword, sort), **slice_dict)
+		for info in movie_infos:
+			info["author"] = ctx.author
+		await play_queue(ctx, movie_infos)
 	elif args[0] == "py" and len(args) >= 2:
 		url = args[1] if re.match("https?://", args[1]) else ' '.join(args[1:])
 		try:
