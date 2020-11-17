@@ -1,0 +1,1 @@
+discordbot: python smile_player.py
