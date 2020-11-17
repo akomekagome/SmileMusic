@@ -102,7 +102,6 @@ class OriginalFFmpegPCMAudio(discord.FFmpegPCMAudio):
 		self.seek(seek_time=seek_time, executable=executable, pipe=pipe, stderr=stderr, before_options=before_options, options=options)
 
 	def seek(self, seek_time, *, executable='ffmpeg', pipe=False, stderr=None, before_options=None, options=None):
-		print(seek_time)
 		self.total_milliseconds = self.get_tootal_millisecond(seek_time)
 		proc = self._process
 		before_options = f"-ss {seek_time} " + before_options
@@ -464,6 +463,12 @@ async def set_volume(ctx, key, value):
 	except:
 		await ctx.channel.send("音量の変更に失敗しました")
 
+async def help(ctx):
+	help_embed = discord.Embed(title="SmilePlayer")
+	help_embed.add_field(name="\u200b", value= ":white_check_mark: [Click here](https://github.com/akomekagome/SmilePlayer/blob/main/README.md) for a list of commands")
+	help_embed.add_field(name="\u200b", value = ":e_mail: If you have a request, [Twitter](https://twitter.com/akomekagome) or [GitHub](https://github.com/akomekagome/FindImage)", inline = False)
+	await ctx.channel.send(embed=help_embed)
+
 def search_keyword_url(keyword, sort = 'v'):
 	urlKeyword = parse.quote(keyword)
 	url = f"https://www.nicovideo.jp/search/{urlKeyword}?sort={sort}"
@@ -557,6 +562,7 @@ async def infos_from_ytdl(url, loop = None):
 
 @client.event
 async def on_ready():
+	await client.change_presence(activity=discord.Game('?help'))
 	print('導入サーバー数: ' + str(len(client.guilds)))
 
 @client.event
@@ -646,6 +652,8 @@ async def on_message(ctx):
 		await skipto(ctx, int(args[1]))
 	elif args[0] == "remove" and len(args) >= 2 and args[1].isdecimal():
 		await remove(ctx, int(args[1]))
+	elif args[0] == "help":
+		await help(ctx)
 
 token = os.environ['SMILEPLAYER_DISCORD_TOKEN']
 client.run(token)
