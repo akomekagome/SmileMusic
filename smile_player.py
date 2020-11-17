@@ -606,7 +606,8 @@ async def on_message(ctx):
 			for info in movie_infos:
 				info["author"] = ctx.author
 			await play_queue(ctx, movie_infos)
-		except:
+		except Exception as e:
+			print(e)
 			await ctx.channel.send("検索に失敗しました。")
 	elif args[0] == "py" and len(args) >= 2:
 		url = args[1] if re.match("https?://", args[1]) else ' '.join(args[1:])
@@ -615,7 +616,8 @@ async def on_message(ctx):
 			for info in infos:
 				info["author"] = ctx.author
 			await play_queue(ctx, infos)
-		except:
+		except Exception as e:
+			print(e)
 			await ctx.channel.send("検索に失敗しました。")
 	elif args[0] == "q":
 		await show_queue(ctx)
