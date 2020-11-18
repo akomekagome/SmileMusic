@@ -243,18 +243,22 @@ async def play_queue(ctx, movie_infos):
 	if ctx.guild.voice_client is None:
 		await join(ctx)
 
-	for info in movie_infos:
+	queue = guild_table.get(ctx.guild.id, {}).get('music_queue')
+	start_index = len(queue) if queue else 0
+
+	for i, info in enumerate(movie_infos):
 		title = info["title"]
 		url = info["url"]
 		t = info["time"]
 		author = info["author"]
-		movie_embed = discord.Embed(title="\u200b",description = f"[{title}]({url})")
+		movie_embed = discord.Embed()
 		movie_embed.set_thumbnail(url= info["image_url"])
+		movie_embed.add_field(name="\u200b", value=f"[{title}]({url})", inline=False)
 		movie_embed.add_field(name="再生時間", value=f"{get_timestr(t)}")
-		movie_embed.set_author(name=f"{author.display_name} added", icon_url=author.avatar_url)
+		movie_embed.add_field(name="キューの順番", value=f"{start_index + i + 1}")
+		movie_embed.set_author(name=f"{author.display_name} added\thage", icon_url=author.avatar_url)
 		await ctx.channel.send(embed = movie_embed)
 
-	queue = guild_table.get(ctx.guild.id, {}).get('music_queue')
 	if queue:
 		queue.extend(movie_infos)
 	else:
@@ -293,14 +297,21 @@ async def show_queue(ctx):
 	if queue:
 		queue_embed = discord.Embed()
 		queue_embed.set_thumbnail(url= queue[0]["image_url"])
+		total_time = 0
 		for i, x in enumerate(queue):
 			title = x["title"]
 			url = x["url"]
 			t = x["time"]
 			author = x["author"]
+			total_time += to_total_second(t)
 			name = "__Now Playing:__" if i == 0 else "__Up Next:__" if i == 1 else "\u200b"
-			queue_embed.add_field(name=name, value=f"`{i + 1}.`[{title}]({url})|`{get_timestr(t)}` Requested by: {author.display_name}",inline=False)
+			queue_embed.add_field(name=name, value=f"`{i + 1}.`[{title}]({url})|`{get_timestr(t)} Requested by: {author.display_name}`",inline=False)
+		player = guild_table.get(ctx.guild.id, {}).get('player')
+		current_total_time = int(player.original.total_milliseconds / 1000)
+		total_time -= current_total_time
+		queue_embed.add_field(name="\u200b", value=f"残り時間: `{get_timestr(to_time(total_time))}`")
 		await ctx.channel.send(embed = queue_embed)
+
 	else:
 		await ctx.channel.send("キューは空です。")
 
@@ -319,13 +330,15 @@ async def show_now_playing(ctx):
 		current_time = to_time(player.original.total_milliseconds / 1000)
 		current_time_str = get_timestr(current_time)
 		end_time_str = get_timestr(t)
-		movie_embed = discord.Embed(title="\u200b",description = f"[{title}]({url})")
+		movie_embed = discord.Embed()
 		movie_embed.set_thumbnail(url= queue[0]["image_url"])
-		current_pos = int(to_total_second(current_time) / to_total_second(t) * 20)
+		movie_embed.add_field(name="\u200b", value=f"[{title}]({url})", inline=False)
+		current_pos = int(to_total_second(current_time) / to_total_second(t) * 18)
 		bar = ''
-		for i in range(20):
+		for i in range(18):
 			bar += '🔘' if current_pos == i else '▬'
-		movie_embed.add_field(name=bar, value=f"`{current_time_str}/{end_time_str}`",inline=False)
+		movie_embed.add_field(name="\u200b", value=bar, inline=False)
+		movie_embed.add_field(name="\u200b", value=f"`{current_time_str}/{end_time_str}`",inline=False)
 		movie_embed.set_author(name=f"{author.display_name} added", icon_url=author.avatar_url)
 		if(url.startswith("https://www.nicovideo.jp/")):
 			movie_embed.add_field(name="\u200b", value = ",".join([f"`[{tag}]`" for tag in get_tags(url)]),inline=False)
