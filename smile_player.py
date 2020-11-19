@@ -619,8 +619,10 @@ async def on_message(ctx):
 				movie_infos = infos_from_json(args[1], **slice_dict)
 			elif re.match("https://www.nicovideo.jp/(.*)/mylist", args[1]):
 				movie_infos = infos_from_json(args[1], **slice_dict if slice_dict else {"start": 0, "stop": 100})
-			elif re.match("https?://", args[1]) or "y" in options:
+			elif re.match("https?://", args[1]):
 				movie_infos = await infos_from_ytdl(args[1], client.loop)
+			elif "y" in options:
+				movie_infos = await infos_from_ytdl(keyword, client.loop)
 			elif "t" in options:
 				movie_infos = infos_from_json(search_tag_url(keyword, sort), **slice_dict)
 			else:
