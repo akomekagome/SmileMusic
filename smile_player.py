@@ -215,7 +215,8 @@ async def leave(ctx):
 		return
 
 	await ctx.guild.voice_client.disconnect()
-
+	await clear(ctx)
+	await stop(ctx)
 	await ctx.channel.send("切断しました。")
 
 def awaitable_voice_client_play(func, player, loop):
