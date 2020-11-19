@@ -479,8 +479,8 @@ async def set_volume(ctx, key, value):
 
 async def help(ctx):
 	help_embed = discord.Embed(title="SmilePlayer")
-	help_embed.add_field(name="\u200b", value= ":white_check_mark: [Click here](https://github.com/akomekagome/SmilePlayer/blob/main/README.md) for a list of commands")
-	help_embed.add_field(name="\u200b", value = ":e_mail: If you have a request, [Twitter](https://twitter.com/akomekagome) or [GitHub](https://github.com/akomekagome/FindImage)", inline = False)
+	help_embed.add_field(name="\u200b", value= ":white_check_mark:コマンド一覧は[こちら](https://github.com/akomekagome/SmilePlayer/blob/main/README.md)")
+	help_embed.add_field(name="\u200b", value = ":e_mail: 要望はこちらから [Twitter](https://twitter.com/akomekagome) or [GitHub](https://github.com/akomekagome/SmilePlayer)", inline = False)
 	await ctx.channel.send(embed=help_embed)
 
 def search_keyword_url(keyword, sort = 'v'):
