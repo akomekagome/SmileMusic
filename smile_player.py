@@ -257,7 +257,7 @@ async def play_queue(ctx, movie_infos):
 		movie_embed.add_field(name="\u200b", value=f"[{title}]({url})", inline=False)
 		movie_embed.add_field(name="再生時間", value=f"{get_timestr(t)}")
 		movie_embed.add_field(name="キューの順番", value=f"{start_index + i + 1}")
-		movie_embed.set_author(name=f"{author.display_name} added\thage", icon_url=author.avatar_url)
+		movie_embed.set_author(name=f"{author.display_name} added", icon_url=author.avatar_url)
 		await ctx.channel.send(embed = movie_embed)
 
 	if queue:
