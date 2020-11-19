@@ -618,7 +618,7 @@ async def on_message(ctx):
 				movie_infos = infos_from_json(args[1], **slice_dict)
 			elif re.match("https://www.nicovideo.jp/(.*)/mylist", args[1]):
 				movie_infos = infos_from_json(args[1], **slice_dict if slice_dict else {"start": 0, "stop": 100})
-			elif re.match("https?://", args[1]):
+			elif re.match("https?://", args[1]) or "y" in options:
 				movie_infos = await infos_from_ytdl(args[1], client.loop)
 			elif "t" in options:
 				movie_infos = infos_from_json(search_tag_url(keyword, sort), **slice_dict)
@@ -627,16 +627,6 @@ async def on_message(ctx):
 			for info in movie_infos:
 				info["author"] = ctx.author
 			await play_queue(ctx, movie_infos)
-		except BaseException as e:
-			print(e)
-			await ctx.channel.send("検索に失敗しました。")
-	elif args[0] == "py" and len(args) >= 2:
-		url = args[1] if re.match("https?://", args[1]) else ' '.join(args[1:])
-		try:
-			infos = await infos_from_ytdl(url, client.loop)
-			for info in infos:
-				info["author"] = ctx.author
-			await play_queue(ctx, infos)
 		except BaseException as e:
 			print(e)
 			await ctx.channel.send("検索に失敗しました。")
