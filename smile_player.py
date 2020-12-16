@@ -16,6 +16,7 @@ import shlex
 import subprocess
 import random
 import psycopg2
+import argparse
 
 log = logging.getLogger(__name__)
 # Suppress noise about console usage from errors
@@ -167,6 +168,7 @@ class perpetualTimer():
 		self.thread.cancel()
 
 defalut_prefix = '?'
+beta_prefix = "!!!"
 table_name = 'guilds'
 defalut_volume = 0.1
 guild_table = {}
@@ -175,6 +177,8 @@ db_url = os.environ['SMILEPLAYER_DATABASE_URL']
 conn = psycopg2.connect(db_url)
 
 def get_prefix_sql(key):
+	if option_args.beta:
+		return beta_prefix
 	with conn.cursor() as cur:
 		cur.execute(f'SELECT id, prefix prefix FROM {table_name} WHERE id=%s', (key, ))
 		d = cur.fetchone()
@@ -661,5 +665,9 @@ async def on_message(ctx):
 	elif args[0] == "help":
 		await help(ctx)
 
-token = os.environ['SMILEPLAYER_DISCORD_TOKEN']
+parser = argparse.ArgumentParser()
+parser.add_argument('-b', '-beta', help='beta版を動かす', dest='beta', action="store_true")
+option_args = parser.parse_args()
+token_code = 'SMILEPLAYERBETA_DISCORD_TOKEN' if option_args.beta else 'SMILEPLAYER_DISCORD_TOKEN'
+token = os.environ[token_code]
 client.run(token)
