@@ -271,6 +271,7 @@ async def play_queue(ctx, movie_infos):
 		while(True):
 			data = guild_table.get(ctx.guild.id, {})
 			if not data['music_queue']:
+				await leave(ctx)
 				return
 			await play_music(ctx, data['music_queue'][0]["url"])
 			has_loop = guild_table.get(ctx.guild.id, {}).get('has_loop')
