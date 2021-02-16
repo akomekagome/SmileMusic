@@ -173,8 +173,9 @@ table_name = 'guilds'
 defalut_volume = 0.1
 guild_table = {}
 client = discord.Client()
-db_url = os.environ['SMILEPLAYER_DATABASE_URL']
-conn = psycopg2.connect(db_url)
+# db_url = os.environ['SMILEPLAYER_DATABASE_URL']
+# conn = psycopg2.connect(db_url)
+conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
 
 def get_prefix_sql(key):
 	if option_args.beta:
