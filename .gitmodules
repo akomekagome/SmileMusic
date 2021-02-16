@@ -1,3 +1,3 @@
 [submodule "youtubedl"]
-	path = youtubedl
+	path = python/youtubedl
 	url = https://github.com/akomekagome/youtube-dl.git
