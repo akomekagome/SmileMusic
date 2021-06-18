@@ -1,4 +1,5 @@
 discord.py
+aiofile
 youtube-dl
 bs4
 psycopg2
