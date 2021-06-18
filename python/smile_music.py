@@ -21,6 +21,7 @@ import argparse
 # from niconico_dl_async import NicoNico as niconico_dl
 from niconicodl.niconico_dl_async import NicoNico as niconico_dl
 import ssl
+import re
 
 log = logging.getLogger(__name__)
 # Suppress noise about console usage from errors
@@ -102,22 +103,22 @@ class NicoNicoDLSource(discord.PCMVolumeTransformer):
 
 class OriginalFFmpegPCMAudio(discord.FFmpegPCMAudio):
     def __init__(self,
-        source,
-        *,
-        executable='ffmpeg',
-        pipe=False,
-        stderr=None,
-        before_options=None,
-        options=None):
+     source,
+     *,
+     executable='ffmpeg',
+     pipe=False,
+     stderr=None,
+     before_options=None,
+     options=None):
         self.total_milliseconds = 0
         self.source = source
 
         super().__init__(source,
-             executable=executable,
-             pipe=pipe,
-             stderr=stderr,
-             before_options=before_options,
-             options=options)
+          executable=executable,
+          pipe=pipe,
+          stderr=stderr,
+          before_options=before_options,
+          options=options)
 
     def read(self):
         ret = super().read()
@@ -137,23 +138,23 @@ class OriginalFFmpegPCMAudio(discord.FFmpegPCMAudio):
             raise Exception()
 
     def rewind(self,
-         rewind_time,
-         *,
-         executable='ffmpeg',
-         pipe=False,
-         stderr=None,
-         before_options=None,
-         options=None):
+      rewind_time,
+      *,
+      executable='ffmpeg',
+      pipe=False,
+      stderr=None,
+      before_options=None,
+      options=None):
         seek_time = str(
          int((self.total_milliseconds -
            self.get_tootal_millisecond(rewind_time)) / 1000))
 
         self.seek(seek_time=seek_time,
-            executable=executable,
-            pipe=pipe,
-            stderr=stderr,
-            before_options=before_options,
-            options=options)
+         executable=executable,
+         pipe=pipe,
+         stderr=stderr,
+         before_options=before_options,
+         options=options)
 
     def seek(self,
        seek_time,
@@ -178,7 +179,7 @@ class OriginalFFmpegPCMAudio(discord.FFmpegPCMAudio):
         args.append('-i')
         args.append('-' if pipe else self.source)
         args.extend(('-f', 's16le', '-ar', '48000', '-ac', '2', '-loglevel',
-            'warning'))
+         'warning'))
 
         if isinstance(options, str):
             args.extend(shlex.split(options))
@@ -328,12 +329,12 @@ async def play_music(ctx, url):
              url, log=option_args.beta, volume=volume)
         else:
             player = await YTDLSource.from_url(url,
-                       loop=client.loop,
-                       stream=True,
-                       volume=volume)
+              loop=client.loop,
+              stream=True,
+              volume=volume)
         guild_table[ctx.guild.id]["player"] = player
         await awaitable_voice_client_play(ctx.guild.voice_client.play, player,
-                  client.loop)
+         client.loop)
         if is_niconico:
             niconico.close()
     except BaseException as error:
@@ -359,12 +360,12 @@ async def play_queue(ctx, movie_infos):
         movie_embed = discord.Embed()
         movie_embed.set_thumbnail(url=info["image_url"])
         movie_embed.add_field(name="\u200b",
-               value=f"[{title}]({url})",
-               inline=False)
+         value=f"[{title}]({url})",
+         inline=False)
         movie_embed.add_field(name="再生時間", value=f"{get_timestr(t)}")
         movie_embed.add_field(name="キューの順番", value=f"{start_index + i + 1}")
         movie_embed.set_author(name=f"{author.display_name} added",
-                icon_url=author.avatar_url)
+          icon_url=author.avatar_url)
         await ctx.channel.send(embed=movie_embed)
 
     if queue:
@@ -384,7 +385,7 @@ async def play_queue(ctx, movie_infos):
             await play_music(ctx, data['music_queue'][0]["url"])
             has_loop = guild_table.get(ctx.guild.id, {}).get('has_loop')
             has_loop_queue = guild_table.get(ctx.guild.id,
-                     {}).get('has_loop_queue')
+               {}).get('has_loop_queue')
             if not has_loop:
                 x = data['music_queue'].pop(0)
                 if has_loop_queue:
@@ -456,8 +457,8 @@ async def show_now_playing(ctx):
         movie_embed = discord.Embed()
         movie_embed.set_thumbnail(url=queue[0]["image_url"])
         movie_embed.add_field(name="\u200b",
-               value=f"[{title}]({url})",
-               inline=False)
+         value=f"[{title}]({url})",
+         inline=False)
         current_pos = int(
          to_total_second(current_time) / to_total_second(t) * 18)
         bar = ''
@@ -465,15 +466,15 @@ async def show_now_playing(ctx):
             bar += '🔘' if current_pos == i else '▬'
         movie_embed.add_field(name="\u200b", value=bar, inline=False)
         movie_embed.add_field(name="\u200b",
-               value=f"`{current_time_str}/{end_time_str}`",
-               inline=False)
+         value=f"`{current_time_str}/{end_time_str}`",
+         inline=False)
         movie_embed.set_author(name=f"{author.display_name} added",
-                icon_url=author.avatar_url)
+          icon_url=author.avatar_url)
         if (url.startswith("https://www.nicovideo.jp/")):
             movie_embed.add_field(name="\u200b",
-                   value=",".join(
-                    [f"`[{tag}]`" for tag in get_tags(url)]),
-                   inline=False)
+             value=",".join(
+              [f"`[{tag}]`" for tag in get_tags(url)]),
+             inline=False)
         await ctx.channel.send(embed=movie_embed)
     else:
         await ctx.channel.send("現在再生していません。")
@@ -630,10 +631,10 @@ async def help(ctx):
      ":white_check_mark:コマンド一覧は[こちら](https://github.com/akomekagome/SmilePlayer/blob/main/README.md)"
     )
     help_embed.add_field(
-        name="\u200b",
-        value=
-        ":computer: discordコミュニティーへの参加は[こちら](https://discord.gg/uVp6Aajqd7)から",
-        inline=False)
+     name="\u200b",
+     value=
+     ":computer: discordコミュニティーへの参加は[こちら](https://discord.gg/uVp6Aajqd7)から",
+     inline=False)
     await ctx.channel.send(embed=help_embed)
 
 
@@ -776,6 +777,13 @@ async def on_ready():
     print('導入サーバー数: ' + str(len(client.guilds)))
 
 
+niconico_pattern = re.compile(
+ r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
+
+niconico_ms_pattern = re.compile(
+ r'https://nico.ms')
+
+
 @client.event
 async def on_message(ctx):
     if ctx.author.bot:
@@ -809,17 +817,22 @@ async def on_message(ctx):
 
             keyword = ' '.join(args[1:])
             sort = next((x for x in ['h', 'f', 'm', 'n'] if x in options), 'v')
-            if args[1].startswith("https://(www.)*(sp.)*nicovideo.jp/search"):
+
+            result = niconico_pattern.subn('https://www.nicovideo.jp', args[1])
+            args[1] = result[0]
+            result = niconico_ms_pattern.subn('https://www.nicovideo.jp/watch', args[1])
+            args[1] = result[0]
+            if args[1].startswith("https://www.nicovideo.jp/search"):
                 movie_infos = niconico_infos_from_html(args[1], **slice_dict)
-            elif args[1].startswith("https://(www.)*(sp.)*nicovideo.jp/tag"):
+            elif args[1].startswith("https://www.nicovideo.jp/tag"):
                 movie_infos = niconico_infos_from_json(args[1], **slice_dict)
-            elif re.match("https://(www.)*(sp.)*nicovideo.jp/.*/mylist", args[1]):
+            elif re.match("https://www.nicovideo.jp/.*/mylist", args[1]):
                 movie_infos = niconico_infos_from_json(
                 args[1], **slice_dict if slice_dict else {
                 "start": 0,
                 "stop": 100
                 })
-            elif re.match("https://(www.)*(sp.)*nicovideo.jp/.*", args[1]):
+            elif args[1].startswith("https://www.nicovideo.jp/watch"):
                 movie_infos = niconico_infos_from_video_url(args[1], **slice_dict)
             elif re.match("https?://.*", args[1]):
                 movie_infos = await infos_from_ytdl(args[1], client.loop)
@@ -875,10 +888,10 @@ async def on_message(ctx):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-b',
-     '-beta',
-     help='beta版を動かす',
-     dest='beta',
-     action="store_true")
+  '-beta',
+  help='beta版を動かす',
+  dest='beta',
+  action="store_true")
 option_args = parser.parse_args()
 token_code = 'SMILEPLAYERBETA_DISCORD_TOKEN' if option_args.beta else 'SMILEPLAYER_DISCORD_TOKEN'
 token = os.environ[token_code]
