@@ -793,50 +793,50 @@ async def on_message(ctx):
     elif args[0] == "leave" or args[0] == "disconnect":
         await leave(ctx)
     elif any([x == args[0] for x in ["p"]]) and len(args) >= 2:
-        optionbases = [x for x in args if x.startswith('-')]
-        args = [i for i in args if i not in optionbases]
-        options = ''.join([x[1:] for x in optionbases])
+        try:
+            optionbases = [x for x in args if x.startswith('-')]
+            args = [i for i in args if i not in optionbases]
+            options = ''.join([x[1:] for x in optionbases])
 
-        if len(args) >= 4 and args[1].isdecimal() and args[2].isdecimal():
-            slice_dict = {"start": int(args[1]) - 1, "stop": int(args[2])}
-            args = args[2:]
-        elif len(args) >= 3 and args[1].isdecimal():
-            slice_dict = {"start": int(args[1]) - 1, "stop": int(args[1])}
-            args = args[1:]
-        else:
-            slice_dict = {}
+            if len(args) >= 4 and args[1].isdecimal() and args[2].isdecimal():
+                slice_dict = {"start": int(args[1]) - 1, "stop": int(args[2])}
+                args = args[2:]
+            elif len(args) >= 3 and args[1].isdecimal():
+                slice_dict = {"start": int(args[1]) - 1, "stop": int(args[1])}
+                args = args[1:]
+            else:
+                slice_dict = {}
 
-        keyword = ' '.join(args[1:])
-        sort = next((x for x in ['h', 'f', 'm', 'n'] if x in options), 'v')
-        if args[1].startswith("https://(www.)*(sp.)*nicovideo.jp/search"):
-            movie_infos = niconico_infos_from_html(args[1], **slice_dict)
-        elif args[1].startswith("https://(www.)*(sp.)*nicovideo.jp/tag"):
-            movie_infos = niconico_infos_from_json(args[1], **slice_dict)
-        elif re.match("https://(www.)*(sp.)*nicovideo.jp/.*/mylist", args[1]):
-            movie_infos = niconico_infos_from_json(
-             args[1], **slice_dict if slice_dict else {
-              "start": 0,
-              "stop": 100
-             })
-        elif re.match("https://(www.)*(sp.)*nicovideo.jp/.*", args[1]):
-            movie_infos = niconico_infos_from_video_url(args[1], **slice_dict)
-        elif re.match("https?://.*", args[1]):
-            movie_infos = await infos_from_ytdl(args[1], client.loop)
-        elif "y" in options:
-            movie_infos = await infos_from_ytdl(keyword, client.loop)
-        elif "t" in options:
-            movie_infos = niconico_infos_from_json(
-             search_tag_url(keyword, sort), **slice_dict)
-        else:
-            movie_infos = niconico_infos_from_html(
-             search_keyword_url(keyword, sort), **slice_dict)
-        for info in movie_infos:
-            info["author"] = ctx.author
-        await play_queue(ctx, movie_infos)
-        # try:
-        # except BaseException as e:
-        # 	print(e)
-        # 	await ctx.channel.send("検索に失敗しました。")
+            keyword = ' '.join(args[1:])
+            sort = next((x for x in ['h', 'f', 'm', 'n'] if x in options), 'v')
+            if args[1].startswith("https://(www.)*(sp.)*nicovideo.jp/search"):
+                movie_infos = niconico_infos_from_html(args[1], **slice_dict)
+            elif args[1].startswith("https://(www.)*(sp.)*nicovideo.jp/tag"):
+                movie_infos = niconico_infos_from_json(args[1], **slice_dict)
+            elif re.match("https://(www.)*(sp.)*nicovideo.jp/.*/mylist", args[1]):
+                movie_infos = niconico_infos_from_json(
+                args[1], **slice_dict if slice_dict else {
+                "start": 0,
+                "stop": 100
+                })
+            elif re.match("https://(www.)*(sp.)*nicovideo.jp/.*", args[1]):
+                movie_infos = niconico_infos_from_video_url(args[1], **slice_dict)
+            elif re.match("https?://.*", args[1]):
+                movie_infos = await infos_from_ytdl(args[1], client.loop)
+            elif "y" in options:
+                movie_infos = await infos_from_ytdl(keyword, client.loop)
+            elif "t" in options:
+                movie_infos = niconico_infos_from_json(
+                search_tag_url(keyword, sort), **slice_dict)
+            else:
+                movie_infos = niconico_infos_from_html(
+                search_keyword_url(keyword, sort), **slice_dict)
+            for info in movie_infos:
+                info["author"] = ctx.author
+            await play_queue(ctx, movie_infos)
+        except BaseException as e:
+            print(e)
+            await ctx.channel.send("検索に失敗しました。")
     elif args[0] == "q":
         await show_queue(ctx)
     elif args[0] == "s":
