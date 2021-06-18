@@ -630,10 +630,10 @@ async def help(ctx):
      ":white_check_mark:コマンド一覧は[こちら](https://github.com/akomekagome/SmilePlayer/blob/main/README.md)"
     )
     help_embed.add_field(
-     name="\u200b",
-     value=
-     ":e_mail: 要望はこちらから [Twitter](https://twitter.com/akomekagome) or [GitHub](https://github.com/akomekagome/SmilePlayer)",
-     inline=False)
+        name="\u200b",
+        value=
+        ":computer: discordコミュニティーへの参加は[こちら](https://discord.gg/uVp6Aajqd7)から",
+        inline=False)
     await ctx.channel.send(embed=help_embed)
 
 
