@@ -1,6 +1,0 @@
-[submodule "youtubedl"]
-	path = python/youtubedl
-	url = https://github.com/akomekagome/youtube-dl.git
-[submodule "python/niconicodl"]
-	path = python/niconicodl
-	url = git@github.com:akomekagome/niconico-dl.git
