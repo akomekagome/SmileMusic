@@ -1,4 +1,5 @@
 discord.py
+youtube-dl
 bs4
 psycopg2
 requests
