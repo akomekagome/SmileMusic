@@ -333,6 +333,8 @@ async def play_music(ctx, url):
               stream=True,
               volume=volume)
         guild_table[ctx.guild.id]["player"] = player
+
+        await asyncio.sleep(2)
         await awaitable_voice_client_play(ctx.guild.voice_client.play, player,
          client.loop)
         if is_niconico:
