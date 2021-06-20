@@ -496,10 +496,14 @@ async def seek(ctx, t):
 
 	player = guild_table.get(ctx.guild.id, {}).get('player')
 	if player:
+		ctx.guild.voice_client.pause()
 		try:
 			player.original.seek(**ffmpeg_options, seek_time=t)
+			player.original.wait_buffer(2)
 		except:
 			await ctx.channel.send("無効な形式です。")
+		finally:
+			ctx.guild.voice_client.resume()
 	else:
 		await ctx.channel.send("現在再生していません。")
 
@@ -613,6 +617,28 @@ async def remove(ctx, index):
 		await ctx.channel.send(f"キューの{index}番目を削除しました")
 	else:
 		await ctx.channel.send("キューは空です。")
+
+async def pause(ctx):
+	if ctx.guild.voice_client is None:
+		await ctx.channel.send("接続していません。")
+		return
+
+	if not ctx.guild.voice_client.is_playing():
+		await ctx.channel.send("再生していません。")
+		return
+
+	ctx.guild.voice_client.pause()
+
+	await ctx.channel.send("一時停止しました、resumeコマンドで解除できます")
+
+async def resume(ctx):
+	if ctx.guild.voice_client is None:
+		await ctx.channel.send("接続していません。")
+		return
+
+	ctx.guild.voice_client.resume()
+
+	await ctx.channel.send("再生を再開しました。")
 
 
 async def set_prefix(ctx, key, value):
@@ -865,6 +891,10 @@ async def on_message(ctx):
 		await stop(ctx)
 	elif args[0] == "np":
 		await show_now_playing(ctx)
+	elif args[0] == "pause":
+		await pause(ctx)
+	elif args[0] == "resume":
+		await resume(ctx)
 	elif args[0] == "seek" and len(args) >= 2:
 		await seek(ctx, args[1])
 	elif args[0] == "rewind" and len(args) >= 2:
