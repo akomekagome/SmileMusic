@@ -6,6 +6,7 @@ ENV TZ JST-9
 ENV TERM xterm
 
 COPY ./python /opt
+COPY ./requirements.txt /opt
 WORKDIR /opt
 
 RUN apt install -y libpq-dev
