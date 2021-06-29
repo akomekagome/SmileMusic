@@ -398,7 +398,7 @@ async def play_queue(ctx, movie_infos):
         }
         while (True):
             data = guild_table.get(ctx.guild.id, {})
-            if not data['music_queue']:
+            if not data or not data['music_queue']:
                 return
             current_info = data['music_queue'][0]
             await play_music(ctx,
