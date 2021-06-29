@@ -69,6 +69,7 @@ ffmpeg_options = {
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
+client = discord.Client()
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.1):
@@ -250,25 +251,7 @@ class perpetualTimer():
     def cancel(self):
         self.thread.cancel()
 
-
-smileplayer_beta_id = 788631253821423627
-defalut_prefix = '?'
-beta_prefix = "!!!"
-table_name = 'guilds'
-defalut_volume = 0.1
-guild_table = {}
-client = discord.Client()
-db_url = os.environ['SMILEPLAYER_DATABASE_URL']
-conn = psycopg2.connect(db_url)
-ssl._create_default_https_context = ssl._create_unverified_context
-# conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
-niconico_pattern = re.compile(r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
-niconico_ms_pattern = re.compile(r'https://nico.ms')
-
-
 def get_prefix_sql(key):
-    if option_args.beta:
-        return beta_prefix
     with conn.cursor() as cur:
         cur.execute(f'SELECT id, prefix prefix FROM {table_name} WHERE id=%s',
                     (key, ))
@@ -299,6 +282,12 @@ def set_volume_sql(key, value):
             (key, value, value))
     conn.commit()
 
+def delete_setting_sql(key):
+    with conn.cursor() as cur:
+        cur.execute(
+            f'DELETE FROM {table_name} WHERE id=%s',
+            (key, ))
+    conn.commit()
 
 def heartbeat(*args):
     r = requests.post(url=args[0], json=args[1], headers=args[2])
@@ -721,6 +710,7 @@ async def set_prefix(ctx, key, value):
         set_prefix_sql(key, value)
         await ctx.channel.send("prefixを変更しました。")
     except:
+        traceback.print_exc()
         await ctx.channel.send("prefixの変更に失敗しました")
 
 
@@ -730,7 +720,34 @@ async def set_volume(ctx, key, value):
         set_volume_sql(key, volume)
         await ctx.channel.send("音量を変更しました。")
     except:
+        traceback.print_exc()
         await ctx.channel.send("音量の変更に失敗しました")
+
+
+async def delete_setting(ctx, key):
+    try:
+        delete_setting_sql(key)
+        await ctx.channel.send("全ての設定を削除しました。")
+    except:
+        traceback.print_exc()
+        await ctx.channel.send("設定の削除に失敗しました")
+
+
+
+async def set_nick(guild, client_id):
+    try:
+        member = guild.get_member(client_id)
+        if not member:
+            return
+        key = str(guild.id)
+        nick = '-'.join([
+            get_prefix_sql(key),
+            '{:.1f}'.format(get_volume_sql(key) / defalut_volume),
+            bot_name
+        ])
+        await member.edit(nick=nick)
+    except:
+        pass
 
 
 async def help(ctx):
@@ -884,6 +901,9 @@ async def infos_from_ytdl(url, loop=None):
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game('?help'))
+    # client_id = client.user.id
+    # set_nicks = [set_nick(guild, client_id) for guild in client.guilds]
+    # await asyncio.gather(*set_nicks)
     print('導入サーバー数: ' + str(len(client.guilds)))
 
 
@@ -936,6 +956,8 @@ async def on_message(ctx):
         await set_volume(ctx, key, args[1])
     elif args[0] == "set_prefix" and len(args) >= 2:
         await set_prefix(ctx, key, args[1])
+    elif args[0] == "delete_setting":
+        await delete_setting(ctx, key)
     elif args[0] == "clear":
         await clear(ctx)
     elif args[0] == "shuffle":
@@ -948,11 +970,21 @@ async def on_message(ctx):
         await help(ctx)
     elif args[0] == "debug":
         if option_args.beta:
-            print(len(ctx.author.voice.channel.members))
-            for x in ctx.author.voice.channel.members:
-                print(x.name)
-                print(x.id)
+            pass
 
+smileplayer_beta_id = 788631253821423627
+defalut_prefix = '?'
+beta_prefix = '!!!'
+v2_prefix = '#'
+table_name = 'guilds'
+defalut_volume = 0.1
+guild_table = {}
+db_url = os.environ['SMILEPLAYER_DATABASE_URL']
+conn = psycopg2.connect(db_url)
+ssl._create_default_https_context = ssl._create_unverified_context
+# conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
+niconico_pattern = re.compile(r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
+niconico_ms_pattern = re.compile(r'https://nico.ms')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-b',
@@ -960,7 +992,17 @@ parser.add_argument('-b',
                     help='beta版を動かす',
                     dest='beta',
                     action="store_true")
+parser.add_argument('-v2', help='v2版を動かす', dest='v2', action="store_true")
 option_args = parser.parse_args()
-token_code = 'SMILEPLAYERBETA_DISCORD_TOKEN' if option_args.beta else 'SMILEPLAYER_DISCORD_TOKEN'
+token_code = 'SMILEPLAYER_DISCORD_TOKEN'
+bot_name = "SmileMusic"
+if option_args.beta:
+    token_code = 'SMILEPLAYERBETA_DISCORD_TOKEN'
+    defalut_prefix = beta_prefix
+    bot_name = "SmileMusic Beta"
+elif option_args.v2:
+    token_code = 'SMILEPLAYERV2_DISCORD_TOKEN'
+    defalut_prefix = v2_prefix
+    bot_name = "SmileMusic V2"
 token = os.environ[token_code]
 client.run(token)
