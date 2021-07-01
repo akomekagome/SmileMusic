@@ -708,6 +708,8 @@ async def play(ctx, args, add_infos={}):
 async def set_prefix(ctx, key, value):
     try:
         set_prefix_sql(key, value)
+        client_id = client.user.id
+        await set_nick(ctx.guild, client_id, force=True)
         await ctx.channel.send("prefixを変更しました。")
     except:
         traceback.print_exc()
@@ -718,6 +720,8 @@ async def set_volume(ctx, key, value):
     try:
         volume = float(value)
         set_volume_sql(key, volume)
+        client_id = client.user.id
+        await set_nick(ctx.guild, client_id, force=True)
         await ctx.channel.send("音量を変更しました。")
     except:
         traceback.print_exc()
@@ -726,7 +730,11 @@ async def set_volume(ctx, key, value):
 
 async def delete_setting(ctx, key):
     try:
+        print("delete")
         delete_setting_sql(key)
+        client_id = client.user.id
+        await set_nick(ctx.guild, client_id, force=True)
+        print("delete end")
         await ctx.channel.send("全ての設定を削除しました。")
     except:
         traceback.print_exc()
@@ -734,10 +742,10 @@ async def delete_setting(ctx, key):
 
 
 
-async def set_nick(guild, client_id):
+async def set_nick(guild, client_id, force = False):
     try:
         member = guild.get_member(client_id)
-        if not member:
+        if not member or (not force and member.nick and member.nick != bot_name):
             return
         key = str(guild.id)
         nick = '-'.join([
@@ -900,11 +908,14 @@ async def infos_from_ytdl(url, loop=None):
 
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game('?help'))
-    # client_id = client.user.id
+    await client.change_presence(activity=discord.Game(
+        f'{defalut_prefix}help {str(len(client.guilds))}サーバー'))
+    client_id = client.user.id
     # set_nicks = [set_nick(guild, client_id) for guild in client.guilds]
     # await asyncio.gather(*set_nicks)
-    print('導入サーバー数: ' + str(len(client.guilds)))
+    for guild in client.guilds:
+        await set_nick(guild, client_id)
+    print("ready!")
 
 
 @client.event
