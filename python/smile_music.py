@@ -25,6 +25,7 @@ import re
 import traceback
 import inspect
 import time
+import sys
 from discord.opus import Encoder as OpusEncoder
 from io import BufferedReader
 
@@ -65,6 +66,28 @@ ytdl_format_options = {
 ffmpeg_options = {
     'before_options':
     '-vn -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
+}
+
+niconico_headers = {
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "ja",
+    "Connection": "keep-alive",
+    "Host": "nvapi.nicovideo.jp",
+    "Origin": "https://www.nicovideo.jp",
+    "Referer": "https://www.nicovideo.jp/",
+    "sec-ch-ua-mobile": "?0",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+    "X-Frontend-Id": "6",
+    "X-Frontend-Version": "0",
+    "X-Niconico-Language": "ja-jp"
+}
+
+headers = {
+    "User-Agent":
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0",
 }
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
@@ -294,7 +317,13 @@ def heartbeat(*args):
 
 
 def get_timestr(t):
-    return t.strftime('%M:%S') if t.hour == 0 else t.strftime('%H:%M:%S')
+    d = t.day - 1
+    if d != 0:
+        return f"{d}days " + t.strftime('%H:%M:%S')
+    if t.hour != 0:
+        return t.strftime('%H:%M:%S')
+    else:
+        return t.strftime('%M:%S')
 
 
 async def join(ctx):
@@ -360,21 +389,47 @@ async def play_queue(ctx, movie_infos):
     queue = guild_table.get(ctx.guild.id, {}).get('music_queue')
     start_index = len(queue) if queue else 0
 
-    for i, info in enumerate(movie_infos):
+    info = movie_infos[0]
+    author = info["author"]
+    movie_embed = discord.Embed()
+    movie_embed.set_thumbnail(url=info["image_url"])
+    infos_len = len(movie_infos)
+    if infos_len <= 1:
         title = info["title"]
         url = info["url"]
         t = info["time"]
-        author = info["author"]
-        movie_embed = discord.Embed()
-        movie_embed.set_thumbnail(url=info["image_url"])
         movie_embed.add_field(name="\u200b",
-                              value=f"[{title}]({url})",
-                              inline=False)
+                                value=f"[{title}]({url})",
+                                inline=False)
         movie_embed.add_field(name="再生時間", value=f"{get_timestr(t)}")
-        movie_embed.add_field(name="キューの順番", value=f"{start_index + i + 1}")
-        movie_embed.set_author(name=f"{author.display_name} added",
-                               icon_url=author.avatar_url)
-        await ctx.channel.send(embed=movie_embed)
+        movie_embed.add_field(name="キューの順番", value=f"{start_index + 1}")
+    else:
+        for x in movie_infos[:min(3, infos_len -1)]:
+            title = x["title"]
+            url = x["url"]
+            movie_embed.add_field(name="\u200b",
+                                value=f"[{title}]({url})",
+                                inline=False)
+        movie_embed.add_field(name="\u200b",
+                    value=f"・・・",
+                    inline=False)
+        last_info = movie_infos[-1]
+        title = last_info["title"]
+        url = last_info["url"]
+        movie_embed.add_field(name="\u200b",
+                            value=f"[{title}]({url})",
+                            inline=False)
+        total_datetime = get_timestr(to_time(sum([to_total_second(x["time"]) for x in movie_infos])))
+        movie_embed.add_field(name="再生時間", value=f"{total_datetime}")
+        movie_embed.add_field(
+            name="キューの順番",
+            value=f"{start_index + 1}...{start_index + infos_len}")
+        movie_embed.add_field(
+            name="曲数",
+            value=f"{infos_len}")
+    movie_embed.set_author(name=f"{author.display_name} added",
+                            icon_url=author.avatar_url)
+    await ctx.channel.send(embed=movie_embed)
 
     if queue:
         queue.extend(movie_infos)
@@ -425,13 +480,12 @@ async def show_queue(ctx):
     if queue:
         queue_embed = discord.Embed()
         queue_embed.set_thumbnail(url=queue[0]["image_url"])
-        total_time = 0
-        for i, x in enumerate(queue):
+        total_time = sum([to_total_second(x["time"]) for x in queue])
+        for i, x in enumerate(queue[:20]):
             title = x["title"]
             url = x["url"]
             t = x["time"]
             author = x["author"]
-            total_time += to_total_second(t)
             name = "__Now Playing:__" if i == 0 else "__Up Next:__" if i == 1 else "\u200b"
             queue_embed.add_field(
                 name=name,
@@ -671,17 +725,17 @@ async def play(ctx, args, add_infos={}):
                                       args[1])
     args[1] = result[0]
 
+    print(args)
+    print(keyword)
     try:
         if args[1].startswith("https://www.nicovideo.jp/search"):
-            movie_infos = niconico_infos_from_html(args[1], **slice_dict)
+            movie_infos = niconico_infos_from_search(args[1], **slice_dict)
         elif args[1].startswith("https://www.nicovideo.jp/tag"):
-            movie_infos = niconico_infos_from_json(args[1], **slice_dict)
-        elif re.match("https://www.nicovideo.jp/.*/mylist", args[1]):
-            movie_infos = niconico_infos_from_json(
-                args[1], **slice_dict if slice_dict else {
-                    "start": 0,
-                    "stop": 100
-                })
+            movie_infos = niconico_infos_from_search(args[1], **slice_dict)
+        elif args[1].startswith("https://www.nicovideo.jp/series"):
+            movie_infos = niconico_infos_from_series(args[1], **slice_dict)
+        elif re.match("https://www.nicovideo.jp/.*/mylist/.*", args[1]):
+            movie_infos = niconico_infos_from_mylist(args[1], **slice_dict)
         elif args[1].startswith("https://www.nicovideo.jp/watch"):
             movie_infos = niconico_infos_from_video_url(args[1])
         elif re.match("https?://.*", args[1]):
@@ -689,15 +743,15 @@ async def play(ctx, args, add_infos={}):
         elif "y" in options:
             movie_infos = await infos_from_ytdl(keyword, client.loop)
         elif "t" in options:
-            movie_infos = niconico_infos_from_json(
-                search_tag_url(keyword, sort), **slice_dict)
+            movie_infos = niconico_infos_from_search(
+                get_tag_url(keyword, sort), **slice_dict)
         else:
-            movie_infos = niconico_infos_from_html(
-                search_keyword_url(keyword, sort), **slice_dict)
+            movie_infos = niconico_infos_from_search(
+                get_keyword_url(keyword, sort), **slice_dict)
         for info in movie_infos:
             info["author"] = ctx.author
             info.update(add_infos)
-    except BaseException as e:
+    except:
         traceback.print_exc()
         print(args)
         await ctx.channel.send("検索に失敗しました。")
@@ -730,11 +784,9 @@ async def set_volume(ctx, key, value):
 
 async def delete_setting(ctx, key):
     try:
-        print("delete")
         delete_setting_sql(key)
         client_id = client.user.id
         await set_nick(ctx.guild, client_id, force=True)
-        print("delete end")
         await ctx.channel.send("全ての設定を削除しました。")
     except:
         traceback.print_exc()
@@ -773,13 +825,13 @@ async def help(ctx):
     await ctx.channel.send(embed=help_embed)
 
 
-def search_keyword_url(keyword, sort='v'):
+def get_keyword_url(keyword, sort='v'):
     urlKeyword = parse.quote(keyword)
     url = f"https://www.nicovideo.jp/search/{urlKeyword}?sort={sort}"
     return url
 
 
-def search_tag_url(keyword, sort='v'):
+def get_tag_url(keyword, sort='v'):
     urlKeyword = parse.quote(keyword)
     url = f"https://www.nicovideo.jp/tag/{urlKeyword}?sort={sort}"
     return url
@@ -787,18 +839,20 @@ def search_tag_url(keyword, sort='v'):
 
 def to_time(total_second):
     total_second = int(total_second)
+    day = total_second / 86400
+    total_second %= 86400
     hour = total_second / 3600
     total_second %= 3600
     minute = total_second / 60
     total_second %= 60
     second = total_second
 
-    return datetime.time(hour=int(hour), minute=int(minute), second=second)
+    return datetime.datetime(year=datetime.MINYEAR, month=1, day=int(day) + 1,hour=int(hour), minute=int(minute), second=second)
 
 
 def to_total_second(t):
 
-    return t.hour * 3600 + t.minute * 60 + t.second
+    return (t.day - 1) * 86400 + t.hour * 3600 + t.minute * 60 + t.second
 
 
 def get_tags(url):
@@ -809,7 +863,7 @@ def get_tags(url):
     return soup.get("content").split(",")
 
 
-def niconico_infos_from_html(url, start=0, stop=1):
+def niconico_infos_from_search(url, start=0, stop=1):
     movie_infos = []
     r = requests.get(url)
     html = r.text
@@ -833,12 +887,56 @@ def niconico_infos_from_html(url, start=0, stop=1):
     return movie_infos
 
 
+def niconico_infos_from_mylist(url, start=None, stop=None):
+    movie_infos = []
+    parse_url = parse.urlparse(url)
+    mylist_id = parse_url[2].split('/')[-1]
+    r = requests.get(
+        f"https://nvapi.nicovideo.jp/v2/mylists/{mylist_id}?pageSize=25000&page=1",
+        headers=niconico_headers)
+    response = r.text
+    j = json.loads(response)
+    items = j["data"]["mylist"]["items"]
+    for item in items[start:stop]:
+        video = item["video"]
+        id = video["id"]
+        url = "https://www.nicovideo.jp/watch/" + id
+        title = video["title"]
+        image_url = video["thumbnail"]["listingUrl"]
+        if not image_url:
+            print(video["thumbnail"])
+        total_second = video["duration"]
+        t = to_time(total_second)
+        info = {"url": url, "title": title, "image_url": image_url, "time": t}
+        movie_infos.append(info)
+
+    return movie_infos
+
+
+def niconico_infos_from_series(url, start=None, stop=None):
+    movie_infos = []
+    r = requests.get(url)
+    html = r.text
+    soup = bs4.BeautifulSoup(html, "html.parser")
+    soup = soup.select('.MediaObject')
+    for s in soup[start:stop]:
+        thumbnail = s.select_one(".Thumbnail")
+        thumbnail_image = thumbnail.select_one(".Thumbnail-image")
+        id = thumbnail.get("data-watchlater-item-id")
+        url = "https://www.nicovideo.jp/watch/" + id
+        image_url = thumbnail_image.get("data-background-image")
+        title = thumbnail_image.get("alt")
+        time_str = thumbnail.select_one(".VideoLength").contents[0].split(':')
+        total_second = int(time_str[0]) * 60 + int(time_str[1])
+        t = to_time(total_second)
+        info = {"url": url, "title": title, "image_url": image_url, "time": t}
+        movie_infos.append(info)
+
+    return movie_infos
+
+# 10件しか取れない
 def niconico_infos_from_json(url, start=0, stop=1):
     movie_infos = []
-    headers = {
-        "User-Agent":
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0",
-    }
     r = req.Request(url=url, headers=headers)
     page = req.urlopen(r)
     html = page.read()
@@ -861,10 +959,6 @@ def niconico_infos_from_json(url, start=0, stop=1):
 
 def niconico_infos_from_video_url(url):
     movie_infos = []
-    headers = {
-        "User-Agent":
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0",
-    }
     r = req.Request(url=url, headers=headers)
     page = req.urlopen(r)
     html = page.read()
