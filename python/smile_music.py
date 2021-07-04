@@ -29,38 +29,26 @@ import sys
 from discord.opus import Encoder as OpusEncoder
 from io import BufferedReader
 
-
 log = logging.getLogger(__name__)
 # Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_ctx = lambda: ''
 
 ytdl_format_options = {
- 'format':
- 'bestaudio/best',
- 'outtmpl':
- '%(extractor)s-%(id)s-%(title)s.%(ext)s',
- 'restrictfilenames':
- True,
- 'noplaylist':
- True,
- 'nocheckcertificate':
- True,
- 'ignoreerrors':
- False,
- 'logtostderr':
- False,
- 'quiet':
- True,
- 'no_warnings':
- True,
- 'default_search':
- 'auto',
+    'format': 'bestaudio/best',
+    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'restrictfilenames': True,
+    'noplaylist': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': False,
+    'logtostderr': False,
+    'quiet': True,
+    'no_warnings': True,
+    'default_search': 'auto',
     'source_address':
     '0.0.0.0',  # bind to ipv4 since ipv6 addresses cause issues sometimes
     'user-agent':
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0",
- "cookiefile":
- "youtube.com_cookies.txt"
+    "cookiefile": "youtube.com_cookies.txt"
 }
 
 ffmpeg_options = {
@@ -79,7 +67,8 @@ niconico_headers = {
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-site",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+    "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
     "X-Frontend-Id": "6",
     "X-Frontend-Version": "0",
     "X-Niconico-Language": "ja-jp"
@@ -93,6 +82,7 @@ headers = {
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 client = discord.Client()
+
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.1):
@@ -274,6 +264,7 @@ class perpetualTimer():
     def cancel(self):
         self.thread.cancel()
 
+
 def get_prefix_sql(key):
     with conn.cursor() as cur:
         cur.execute(f'SELECT id, prefix prefix FROM {table_name} WHERE id=%s',
@@ -305,12 +296,12 @@ def set_volume_sql(key, value):
             (key, value, value))
     conn.commit()
 
+
 def delete_setting_sql(key):
     with conn.cursor() as cur:
-        cur.execute(
-            f'DELETE FROM {table_name} WHERE id=%s',
-            (key, ))
+        cur.execute(f'DELETE FROM {table_name} WHERE id=%s', (key, ))
     conn.commit()
+
 
 def heartbeat(*args):
     r = requests.post(url=args[0], json=args[1], headers=args[2])
@@ -399,36 +390,33 @@ async def play_queue(ctx, movie_infos):
         url = info["url"]
         t = info["time"]
         movie_embed.add_field(name="\u200b",
-                                value=f"[{title}]({url})",
-                                inline=False)
+                              value=f"[{title}]({url})",
+                              inline=False)
         movie_embed.add_field(name="再生時間", value=f"{get_timestr(t)}")
         movie_embed.add_field(name="キューの順番", value=f"{start_index + 1}")
     else:
-        for x in movie_infos[:min(3, infos_len -1)]:
+        for x in movie_infos[:min(3, infos_len - 1)]:
             title = x["title"]
             url = x["url"]
             movie_embed.add_field(name="\u200b",
-                                value=f"[{title}]({url})",
-                                inline=False)
-        movie_embed.add_field(name="\u200b",
-                    value=f"・・・",
-                    inline=False)
+                                  value=f"[{title}]({url})",
+                                  inline=False)
+        movie_embed.add_field(name="\u200b", value=f"・・・", inline=False)
         last_info = movie_infos[-1]
         title = last_info["title"]
         url = last_info["url"]
         movie_embed.add_field(name="\u200b",
-                            value=f"[{title}]({url})",
-                            inline=False)
-        total_datetime = get_timestr(to_time(sum([to_total_second(x["time"]) for x in movie_infos])))
+                              value=f"[{title}]({url})",
+                              inline=False)
+        total_datetime = get_timestr(
+            to_time(sum([to_total_second(x["time"]) for x in movie_infos])))
         movie_embed.add_field(name="再生時間", value=f"{total_datetime}")
         movie_embed.add_field(
             name="キューの順番",
             value=f"{start_index + 1}...{start_index + infos_len}")
-        movie_embed.add_field(
-            name="曲数",
-            value=f"{infos_len}")
+        movie_embed.add_field(name="曲数", value=f"{infos_len}")
     movie_embed.set_author(name=f"{author.display_name} added",
-                            icon_url=author.avatar_url)
+                           icon_url=author.avatar_url)
     await ctx.channel.send(embed=movie_embed)
 
     if queue:
@@ -442,6 +430,10 @@ async def play_queue(ctx, movie_infos):
         }
         while (True):
             data = guild_table.get(ctx.guild.id, {})
+            if not ctx.guild.voice_client:
+                guild_table.pop(ctx.guild.id, None)
+                await ctx.channel.send("切断しました。")
+                return
             if not data or not data['music_queue']:
                 return
             current_info = data['music_queue'][0]
@@ -725,8 +717,6 @@ async def play(ctx, args, add_infos={}):
                                       args[1])
     args[1] = result[0]
 
-    print(args)
-    print(keyword)
     try:
         if args[1].startswith("https://www.nicovideo.jp/search"):
             movie_infos = niconico_infos_from_search(args[1], **slice_dict)
@@ -793,17 +783,16 @@ async def delete_setting(ctx, key):
         await ctx.channel.send("設定の削除に失敗しました")
 
 
-
-async def set_nick(guild, client_id, force = False):
+async def set_nick(guild, client_id, force=False):
     try:
         member = guild.get_member(client_id)
-        if not member or (not force and member.nick and member.nick != bot_name):
+        if not member or (not force and member.nick
+                          and member.nick != bot_name):
             return
         key = str(guild.id)
         nick = '-'.join([
             get_prefix_sql(key),
-            '{:.1f}'.format(get_volume_sql(key) / defalut_volume),
-            bot_name
+            '{:.1f}'.format(get_volume_sql(key) / defalut_volume), bot_name
         ])
         await member.edit(nick=nick)
     except:
@@ -847,7 +836,12 @@ def to_time(total_second):
     total_second %= 60
     second = total_second
 
-    return datetime.datetime(year=datetime.MINYEAR, month=1, day=int(day) + 1,hour=int(hour), minute=int(minute), second=second)
+    return datetime.datetime(year=datetime.MINYEAR,
+                             month=1,
+                             day=int(day) + 1,
+                             hour=int(hour),
+                             minute=int(minute),
+                             second=second)
 
 
 def to_total_second(t):
@@ -933,6 +927,7 @@ def niconico_infos_from_series(url, start=None, stop=None):
         movie_infos.append(info)
 
     return movie_infos
+
 
 # 10件しか取れない
 def niconico_infos_from_json(url, start=0, stop=1):
@@ -1076,6 +1071,7 @@ async def on_message(ctx):
     elif args[0] == "debug":
         if option_args.beta:
             pass
+
 
 smileplayer_beta_id = 788631253821423627
 defalut_prefix = '?'
