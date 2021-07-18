@@ -912,15 +912,15 @@ def niconico_infos_from_series(url, start=None, stop=None):
     r = requests.get(url)
     html = r.text
     soup = bs4.BeautifulSoup(html, "html.parser")
-    soup = soup.select('.MediaObject')
+    soup = soup.select('.NC-MediaObject')
     for s in soup[start:stop]:
-        thumbnail = s.select_one(".Thumbnail")
-        thumbnail_image = thumbnail.select_one(".Thumbnail-image")
-        id = thumbnail.get("data-watchlater-item-id")
-        url = "https://www.nicovideo.jp/watch/" + id
+        link = s.select_one(".NC-Link")
+        thumbnail = s.select_one(".NC-Thumbnail")
+        thumbnail_image = thumbnail.select_one(".NC-Thumbnail-image")
+        url = "https://www.nicovideo.jp/" + link.get("href")
         image_url = thumbnail_image.get("data-background-image")
-        title = thumbnail_image.get("alt")
-        time_str = thumbnail.select_one(".VideoLength").contents[0].split(':')
+        title = thumbnail_image.get("aria-label")
+        time_str = thumbnail.select_one(".NC-VideoLength").contents[0].split(':')
         total_second = int(time_str[0]) * 60 + int(time_str[1])
         t = to_time(total_second)
         info = {"url": url, "title": title, "image_url": image_url, "time": t}
