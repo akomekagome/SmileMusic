@@ -716,6 +716,8 @@ async def play(ctx, args, add_infos={}):
                                       args[1])
     args[1] = result[0]
 
+    movie_infos = None
+
     try:
         if args[1].startswith("https://www.nicovideo.jp/search"):
             movie_infos = niconico_infos_from_search(args[1], **slice_dict)
@@ -744,6 +746,7 @@ async def play(ctx, args, add_infos={}):
         traceback.print_exc()
         print(args)
         await ctx.channel.send("検索に失敗しました。")
+        return
 
     await play_queue(ctx, movie_infos)
 
