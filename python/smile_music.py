@@ -999,6 +999,7 @@ async def infos_from_ytdl(url, loop=None):
 
 @client.event
 async def on_ready():
+    print(client.user.name)
     await client.change_presence(activity=discord.Game(
         f'{defalut_prefix}help {str(len(client.guilds))}サーバー'))
     client_id = client.user.id
@@ -1075,7 +1076,6 @@ async def on_message(ctx):
             pass
 
 
-smileplayer_beta_id = 788631253821423627
 defalut_prefix = '?'
 beta_prefix = '!!!'
 v2_prefix = '#'
