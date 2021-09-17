@@ -710,6 +710,9 @@ async def play(ctx, args, add_infos={}):
 
     keyword = ' '.join(args[1:])
 
+    if niconico_id_pattern.match(args[1]):
+        args[1] = f"https://www.nicovideo.jp/watch/{args[1]}"
+
     result = niconico_pattern.subn('https://www.nicovideo.jp', args[1])
     args[1] = result[0]
     result = niconico_ms_pattern.subn('https://www.nicovideo.jp/watch',
@@ -1088,6 +1091,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 # conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
 niconico_pattern = re.compile(r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
 niconico_ms_pattern = re.compile(r'https://nico.ms')
+niconico_id_pattern = re.compile(r'^[a-z]{2}[0-9]+$')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-b',
