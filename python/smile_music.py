@@ -979,10 +979,6 @@ async def infos_from_ytdl(url, loop=None):
 
 @client.event
 async def on_ready():
-    client_id = client.user.id
-    bot_name = client.user.name
-    for guild in client.guilds:
-        await set_nick(guild, client_id, bot_name)
     print("ready!")
 
 
