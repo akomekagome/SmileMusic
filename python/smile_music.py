@@ -788,7 +788,7 @@ async def delete_setting(ctx, key):
         await ctx.channel.send("設定の削除に失敗しました")
 
 
-async def set_nick(guild, client_id, force=False):
+async def set_nick(guild, client_id, bot_name, force=False):
     try:
         member = guild.get_member(client_id)
         if not member or (not force and member.nick
@@ -934,29 +934,6 @@ def niconico_infos_from_series(url, start=None, stop=None):
     return movie_infos
 
 
-# 10件しか取れない
-def niconico_infos_from_json(url, start=0, stop=1):
-    movie_infos = []
-    r = req.Request(url=url, headers=headers)
-    page = req.urlopen(r)
-    html = page.read()
-    page.close()
-    soup = bs4.BeautifulSoup(html, "html.parser")
-    soup = soup.select_one('script[type="application/ld+json"]')
-    j = json.loads(soup.contents[0])
-    elements = j['itemListElement']
-    for elem in elements[start:stop]:
-        url = elem["url"]
-        title = elem["name"]
-        image_url = elem["thumbnailUrl"][0]
-        total_second = int(elem["duration"][2:-1])
-        t = to_time(total_second)
-        info = {"url": url, "title": title, "image_url": image_url, "time": t}
-        movie_infos.append(info)
-
-    return movie_infos
-
-
 def niconico_infos_from_video_url(url):
     movie_infos = []
     r = req.Request(url=url, headers=headers)
@@ -1002,15 +979,25 @@ async def infos_from_ytdl(url, loop=None):
 
 @client.event
 async def on_ready():
-    print(client.user.name)
+    client_id = client.user.id
+    bot_name = client.user.name
+    for guild in client.guilds:
+        await set_nick(guild, client_id, bot_name)
+    print("ready!")
+
+
+@client.event
+async def on_guild_join(guild):
     await client.change_presence(activity=discord.Game(
         f'{defalut_prefix}help {str(len(client.guilds))}サーバー'))
     client_id = client.user.id
-    # set_nicks = [set_nick(guild, client_id) for guild in client.guilds]
-    # await asyncio.gather(*set_nicks)
-    for guild in client.guilds:
-        await set_nick(guild, client_id)
-    print("ready!")
+    bot_name = client.user.name
+    await set_nick(guild, client_id, bot_name)
+
+@client.event
+async def on_guild_remove(guild):
+    key = str(guild.id)
+    delete_setting_sql(key)
 
 
 @client.event
@@ -1102,14 +1089,11 @@ parser.add_argument('-b',
 parser.add_argument('-v2', help='v2版を動かす', dest='v2', action="store_true")
 option_args = parser.parse_args()
 token_code = 'SMILEPLAYER_DISCORD_TOKEN'
-bot_name = "SmileMusic"
 if option_args.beta:
     token_code = 'SMILEPLAYERBETA_DISCORD_TOKEN'
     defalut_prefix = beta_prefix
-    bot_name = "SmileMusic Beta"
 elif option_args.v2:
     token_code = 'SMILEPLAYERV2_DISCORD_TOKEN'
     defalut_prefix = v2_prefix
-    bot_name = "SmileMusic V2"
 token = os.environ[token_code]
 client.run(token)
