@@ -979,6 +979,8 @@ async def infos_from_ytdl(url, loop=None):
 
 @client.event
 async def on_ready():
+    await client.change_presence(activity=discord.Game(
+        f'{defalut_prefix}help {str(len(client.guilds))}サーバー'))
     print("ready!")
 
 
