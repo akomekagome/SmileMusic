@@ -2,14 +2,15 @@ version: "3"
 
 services:
     smile_music_db:
+        restart: always
         build:
             context: .
             dockerfile: DockerfilePostgres
         container_name: "smile_music_db"
         env_file:
-            - ./hiddendata/smile_music_postgres.env
+            - ./local.env
         ports:
-            - "5433:5432"
+            - "5432:5432"
         volumes:
             - ./database:/var/lib/postgresql/data
             - ./initdb:/docker-entrypoint-initdb.d
@@ -20,12 +21,14 @@ services:
             context: .
             dockerfile: DockerfilePy
         container_name: "smile_music_py"
+        command: forever -c python smile_music.py
         tty: true
         depends_on:
             - smile_music_db
         env_file:
-            - ./hiddendata/smile_music_postgres.env
-            - ./hiddendata/smile_music_py.env
+            - ./local.env
+        volumes:
+            - ./python:/opt
 
 volumes:
     database:
