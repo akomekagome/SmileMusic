@@ -1041,6 +1041,7 @@ async def on_message(ctx):
     elif args[0] == "loop":
         await loop(ctx)
     elif args[0] == "loopqueue":
+        return
         await loopqueue(ctx)
     elif args[0] == "set_volume" and len(args) >= 2:
         await set_volume(ctx, key, args[1])
