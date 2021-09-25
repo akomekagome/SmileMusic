@@ -5,8 +5,12 @@ services:
         image: postgres:13.2
         restart: always
         container_name: "smile_music_db"
-        env_file:
-            - ./local.env
+        environment:
+            - POSTGRES_HOST
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - POSTGRES_DB
+            - POSTGRES_PORT
         ports:
             - "5432:5432"
         volumes:
@@ -22,8 +26,15 @@ services:
         tty: true
         depends_on:
             - smile_music_db
-        env_file:
-            - ./local.env
+        environment:
+            - POSTGRES_HOST
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - POSTGRES_DB
+            - POSTGRES_PORT
+            - SMILEMUSIC_DISCORD_TOKEN
+            - SMILEMUSIC_PREFIX
+            - SMILEMUSIC_ENV
         volumes:
             - ./python:/opt
 
