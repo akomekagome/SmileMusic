@@ -2,10 +2,8 @@ version: "3"
 
 services:
     smile_music_db:
+        image: postgres:13.2
         restart: always
-        build:
-            context: .
-            dockerfile: DockerfilePostgres
         container_name: "smile_music_db"
         env_file:
             - ./local.env
@@ -19,7 +17,6 @@ services:
         restart: always
         build:
             context: .
-            dockerfile: DockerfilePy
         container_name: "smile_music_py"
         command: forever -c python smile_music.py
         tty: true

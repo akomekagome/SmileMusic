@@ -6,6 +6,7 @@ ENV TZ JST-9
 ENV TERM xterm
 
 COPY ./requirements.txt /opt
+COPY ./python /opt
 WORKDIR /opt
 
 RUN apt-get update
