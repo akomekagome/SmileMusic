@@ -1070,7 +1070,11 @@ table_name = 'guilds'
 defalut_volume = 0.1
 guild_table = {}
 ssl._create_default_https_context = ssl._create_unverified_context
-conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
+db_url = os.environ['POSTGRES_DATABASE_URL']
+if db_url != "url":
+    conn = psycopg2.connect(db_url)
+else:
+    conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
 niconico_pattern = re.compile(r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
 niconico_ms_pattern = re.compile(r'https://nico.ms')
 niconico_id_pattern = re.compile(r'^[a-z]{2}[0-9]+$')
