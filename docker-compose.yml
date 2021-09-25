@@ -22,10 +22,10 @@ services:
         build:
             context: .
         container_name: "smile_music_py"
-        command: forever -c python smile_music.py
         tty: true
         depends_on:
             - smile_music_db
+        command: python smile_music.py
         environment:
             - POSTGRES_HOST
             - POSTGRES_USER
