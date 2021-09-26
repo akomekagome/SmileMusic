@@ -340,8 +340,8 @@ def awaitable_voice_client_play(func, player, loop):
 
 async def play_music(ctx, url, first_seek=None):
     try:
-        volume = get_volume_sql(str(ctx.guild.id))
         is_niconico = url.startswith("https://www.nicovideo.jp/")
+        volume = get_volume_sql(str(ctx.guild.id))
         if is_niconico:
             player, niconico = await NicoNicoDLSource.from_url(
                 url, log=env=="dev", volume=volume)
@@ -357,12 +357,15 @@ async def play_music(ctx, url, first_seek=None):
         player.original.wait_buffer()
         await awaitable_voice_client_play(ctx.guild.voice_client.play, player,
                                           client.loop)
+
         if is_niconico:
             niconico.close()
+        return False
     except BaseException as error:
         traceback.print_exc()
         print(url)
         await ctx.channel.send("再生に失敗しました")
+        return True
 
 
 async def play_queue(ctx, movie_infos):
@@ -432,12 +435,17 @@ async def play_queue(ctx, movie_infos):
             if not data or not data['music_queue']:
                 return
             current_info = data['music_queue'][0]
-            await play_music(ctx,
+            is_error = await play_music(ctx,
                              current_info.get('url'),
                              first_seek=current_info.get('first_seek'))
+            if is_error:
+                data['music_queue'].pop(0)
+                continue
+
             has_loop = guild_table.get(ctx.guild.id, {}).get('has_loop')
             has_loop_queue = guild_table.get(ctx.guild.id,
                                              {}).get('has_loop_queue')
+
             if not has_loop:
                 x = data['music_queue'].pop(0)
                 if has_loop_queue:
@@ -1041,7 +1049,6 @@ async def on_message(ctx):
     elif args[0] == "loop":
         await loop(ctx)
     elif args[0] == "loopqueue":
-        return
         await loopqueue(ctx)
     elif args[0] == "set_volume" and len(args) >= 2:
         await set_volume(ctx, key, args[1])
