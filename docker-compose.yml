@@ -1,16 +1,49 @@
 version: "3"
 
 services:
+    smile_music_db:
+        image: postgres:13.2
+        restart: always
+        container_name: "smile_music_db"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -d ${POSTGRES_DB}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        environment:
+            - POSTGRES_HOST
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - POSTGRES_DB
+            - POSTGRES_PORT
+        ports:
+            - "5432:5432"
+        volumes:
+            - ./database:/var/lib/postgresql/data
+            - ./initdb:/docker-entrypoint-initdb.d
+
     smile_music_py:
         restart: always
         build:
             context: .
-            dockerfile: DockerfilePy
         container_name: "smile_music_py"
         tty: true
-        env_file:
-            - ./hiddendata/smile_music_postgres.env
-            - ./hiddendata/smile_music_py.env
+        depends_on:
+            smile_music_db:
+                condition: service_healthy
+        command: python smile_music.py
+        environment:
+            - POSTGRES_HOST
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - POSTGRES_DB
+            - POSTGRES_PORT
+            - POSTGRES_DATABASE_URL
+            - SMILEMUSIC_DISCORD_TOKEN
+            - SMILEMUSIC_PREFIX
+            - SMILEMUSIC_ENV
+        volumes:
+            - ./python:/opt
 
 volumes:
     database:

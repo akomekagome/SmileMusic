@@ -1,5 +1,0 @@
-FROM postgres:13.2
-USER root
-
-COPY ./hiddendata/smile_music_db.dump /opt
-WORKDIR /opt

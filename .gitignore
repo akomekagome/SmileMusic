@@ -1,3 +1,4 @@
 /hiddendata/*
 !/hiddendata/.gitkeep
 /database/*
+!/database/.gitkeep

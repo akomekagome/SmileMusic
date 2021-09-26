@@ -17,15 +17,11 @@ import shlex
 import subprocess
 import random
 import psycopg2
-import argparse
 # from niconico_dl_async import NicoNico as niconico_dl
 from niconicodl.niconico_dl_async import NicoNico as niconico_dl
 import ssl
 import re
 import traceback
-import inspect
-import time
-import sys
 from discord.opus import Encoder as OpusEncoder
 from io import BufferedReader
 
@@ -344,11 +340,11 @@ def awaitable_voice_client_play(func, player, loop):
 
 async def play_music(ctx, url, first_seek=None):
     try:
-        volume = get_volume_sql(str(ctx.guild.id))
         is_niconico = url.startswith("https://www.nicovideo.jp/")
+        volume = get_volume_sql(str(ctx.guild.id))
         if is_niconico:
             player, niconico = await NicoNicoDLSource.from_url(
-                url, log=option_args.beta, volume=volume)
+                url, log=env=="dev", volume=volume)
         else:
             player = await YTDLSource.from_url(url,
                                                loop=client.loop,
@@ -361,12 +357,15 @@ async def play_music(ctx, url, first_seek=None):
         player.original.wait_buffer()
         await awaitable_voice_client_play(ctx.guild.voice_client.play, player,
                                           client.loop)
+
         if is_niconico:
             niconico.close()
+        return False
     except BaseException as error:
         traceback.print_exc()
         print(url)
         await ctx.channel.send("再生に失敗しました")
+        return True
 
 
 async def play_queue(ctx, movie_infos):
@@ -436,12 +435,17 @@ async def play_queue(ctx, movie_infos):
             if not data or not data['music_queue']:
                 return
             current_info = data['music_queue'][0]
-            await play_music(ctx,
+            is_error = await play_music(ctx,
                              current_info.get('url'),
                              first_seek=current_info.get('first_seek'))
+            if is_error:
+                data['music_queue'].pop(0)
+                continue
+
             has_loop = guild_table.get(ctx.guild.id, {}).get('has_loop')
             has_loop_queue = guild_table.get(ctx.guild.id,
                                              {}).get('has_loop_queue')
+
             if not has_loop:
                 x = data['music_queue'].pop(0)
                 if has_loop_queue:
@@ -758,7 +762,8 @@ async def set_prefix(ctx, key, value):
     try:
         set_prefix_sql(key, value)
         client_id = client.user.id
-        await set_nick(ctx.guild, client_id, force=True)
+        bot_name = client.user.name
+        await set_nick(ctx.guild, client_id, bot_name, force=True)
         await ctx.channel.send("prefixを変更しました。")
     except:
         traceback.print_exc()
@@ -770,7 +775,8 @@ async def set_volume(ctx, key, value):
         volume = float(value)
         set_volume_sql(key, volume)
         client_id = client.user.id
-        await set_nick(ctx.guild, client_id, force=True)
+        bot_name = client.user.name
+        await set_nick(ctx.guild, client_id, bot_name, force=True)
         await ctx.channel.send("音量を変更しました。")
     except:
         traceback.print_exc()
@@ -781,7 +787,8 @@ async def delete_setting(ctx, key):
     try:
         delete_setting_sql(key)
         client_id = client.user.id
-        await set_nick(ctx.guild, client_id, force=True)
+        bot_name = client.user.name
+        await set_nick(ctx.guild, client_id, bot_name, force=True)
         await ctx.channel.send("全ての設定を削除しました。")
     except:
         traceback.print_exc()
@@ -1060,38 +1067,26 @@ async def on_message(ctx):
     elif args[0] == "help":
         await help(ctx)
     elif args[0] == "debug":
-        if option_args.beta:
-            pass
+        if env != "dev":
+            return
+
+        pass
 
 
-defalut_prefix = '?'
-beta_prefix = '!!!'
-v2_prefix = '#'
 table_name = 'guilds'
 defalut_volume = 0.1
 guild_table = {}
-db_url = os.environ['SMILEPLAYER_DATABASE_URL']
-conn = psycopg2.connect(db_url)
 ssl._create_default_https_context = ssl._create_unverified_context
-# conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
+db_url = os.environ['POSTGRES_DATABASE_URL']
+if db_url != "url":
+    conn = psycopg2.connect(db_url)
+else:
+    conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
 niconico_pattern = re.compile(r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
 niconico_ms_pattern = re.compile(r'https://nico.ms')
 niconico_id_pattern = re.compile(r'^[a-z]{2}[0-9]+$')
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-b',
-                    '-beta',
-                    help='beta版を動かす',
-                    dest='beta',
-                    action="store_true")
-parser.add_argument('-v2', help='v2版を動かす', dest='v2', action="store_true")
-option_args = parser.parse_args()
-token_code = 'SMILEPLAYER_DISCORD_TOKEN'
-if option_args.beta:
-    token_code = 'SMILEPLAYERBETA_DISCORD_TOKEN'
-    defalut_prefix = beta_prefix
-elif option_args.v2:
-    token_code = 'SMILEPLAYERV2_DISCORD_TOKEN'
-    defalut_prefix = v2_prefix
-token = os.environ[token_code]
+token = os.environ['SMILEMUSIC_DISCORD_TOKEN']
+defalut_prefix = os.environ['SMILEMUSIC_PREFIX']
+env = os.environ['SMILEMUSIC_ENV']
 client.run(token)
