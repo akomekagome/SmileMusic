@@ -179,7 +179,7 @@ class NicoNico():
             self.stop = False
             await self.get_info()
             session_id = self.start_stream()
-            self.heartbeat_task = perpetualTimer(30, self.wrap_heartbeat,
+            self.heartbeat_task = perpetualTimer(40, self.wrap_heartbeat,
                                                  session_id)
             self.heartbeat_task.start()
             self.now_downloading = True
