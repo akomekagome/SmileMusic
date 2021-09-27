@@ -1077,16 +1077,15 @@ table_name = 'guilds'
 defalut_volume = 0.1
 guild_table = {}
 ssl._create_default_https_context = ssl._create_unverified_context
-db_url = os.environ['POSTGRES_DATABASE_URL']
-if db_url != "url":
-    conn = psycopg2.connect(db_url)
+token = os.environ['SMILEMUSIC_DISCORD_TOKEN']
+defalut_prefix = os.environ['SMILEMUSIC_PREFIX']
+env = os.environ['SMILEMUSIC_ENV']
+if env != "dev":
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
 else:
     conn = psycopg2.connect(host=os.environ.get('POSTGRES_HOST'), user=os.environ.get('POSTGRES_USER'), password=os.environ.get('POSTGRES_PASSWORD'), database=os.environ.get('POSTGRES_DB'), port=int(os.environ.get('POSTGRES_PORT')))
 niconico_pattern = re.compile(r'https://(www.nicovideo.jp|sp.nicovideo.jp)')
 niconico_ms_pattern = re.compile(r'https://nico.ms')
 niconico_id_pattern = re.compile(r'^[a-z]{2}[0-9]+$')
 
-token = os.environ['SMILEMUSIC_DISCORD_TOKEN']
-defalut_prefix = os.environ['SMILEMUSIC_PREFIX']
-env = os.environ['SMILEMUSIC_ENV']
 client.run(token)

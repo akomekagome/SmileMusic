@@ -38,10 +38,9 @@ services:
             - POSTGRES_PASSWORD
             - POSTGRES_DB
             - POSTGRES_PORT
-            - POSTGRES_DATABASE_URL
             - SMILEMUSIC_DISCORD_TOKEN
             - SMILEMUSIC_PREFIX
-            - SMILEMUSIC_ENV
+            - SMILEMUSIC_ENV=dev
         volumes:
             - ./python:/opt
 

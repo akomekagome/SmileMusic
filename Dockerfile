@@ -1,12 +1,8 @@
 FROM python:3.9.7-buster
 USER root
 
-ARG postgres_database_url smilemusic_discord_token smilemusic_prefix smilemusic_env
-
-ENV POSTGRES_DATABASE_URL=${postgres_database_url}
-ENV SMILEMUSIC_DISCORD_TOKEN=${smilemusic_discord_token}
-ENV SMILEMUSIC_PREFIX=${smilemusic_prefix}
-ENV SMILEMUSIC_ENV=${smilemusic_env}
+ENV SMILEMUSIC_PREFIX=?
+ENV SMILEMUSIC_ENV=Prod
 
 ENV TZ JST-9
 ENV TERM xterm
