@@ -1,2 +1,2 @@
 cd ..
-PowerShell docker compose up -d 
+PowerShell docker compose up -d
