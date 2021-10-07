@@ -1,5 +1,7 @@
 # SmilePlayer
-ニコニコ動画に特化したDiscord向け音楽再生Botです。導入は[こちら](https://discord.com/api/oauth2/authorize?client_id=773723833387319309&permissions=8&scope=bot)から
+ニコニコ動画に特化したDiscord向け音楽再生Botです。
+すみません、今一旦新規の追加を止めています。
+
 ## gif
 ![smile_player](https://j.gifs.com/910gW8.gif)
 
